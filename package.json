@@ -1,0 +1,29 @@
+{
+  "name": "dapogizi-be",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/PhoebeIvana/DAPOGIZI-BE#readme",
+  "bugs": {
+    "url": "https://github.com/PhoebeIvana/DAPOGIZI-BE/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PhoebeIvana/DAPOGIZI-BE.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.1",
+    "nodemon": "^3.1.10"
+  }
+}
