@@ -1,6 +1,6 @@
 // controllers/vendorController.js
 const { Vendor } = require("../models/vendorSchema");
-const { geocodeAddress, resolveTargetSchools } = require("../utils/geoapify");
+const { geocodeAddress, findNearbySchools } = require("../utils/geoapify");
 
 const updateProfile = async (req, res) => {
   try {
@@ -11,43 +11,43 @@ const updateProfile = async (req, res) => {
     const {
       vendor_name,
       address,
-      operating_days,        // array of strings ["Mon", ...]
-      location,              // optional: { lat, lon }
-      target_schools,        // optional: array of school names
+      operating_days,  // ["Mon", ...]
+      location,        // optional { lat, lon } to override geocode
+      skip_geo         // optional: "true" to NOT geocode address
     } = req.body || {};
 
     if (vendor_name != null) vendor.vendor_name = vendor_name;
     if (address != null) vendor.address = address;
     if (Array.isArray(operating_days)) vendor.operating_days = operating_days;
 
-    // Determine coordinates: prefer client-provided location, else geocode address
-    let baseLonLat = null;
+    // Determine coordinates to use as search bias for schools
+    let bias = null;
+    const wantSkipGeo = String(skip_geo || "").toLowerCase() === "true";
+
     if (location && location.lat != null && location.lon != null) {
       vendor.location = {
         type: "Point",
         coordinates: [Number(location.lon), Number(location.lat)],
       };
-      baseLonLat = { lon: Number(location.lon), lat: Number(location.lat) };
-    } else if (address) {
+      bias = { lon: Number(location.lon), lat: Number(location.lat) };
+    } else if (!wantSkipGeo && address) {
       const geo = await geocodeAddress(address);
       if (geo) {
-        vendor.location = {
-          type: "Point",
-          coordinates: [geo.lon, geo.lat],
-        };
-        baseLonLat = { lon: geo.lon, lat: geo.lat };
+        vendor.location = { type: "Point", coordinates: [geo.lon, geo.lat] };
+        bias = { lon: geo.lon, lat: geo.lat };
       }
     } else if (vendor.location?.coordinates?.length === 2) {
-      baseLonLat = {
+      bias = {
         lon: vendor.location.coordinates[0],
         lat: vendor.location.coordinates[1],
       };
     }
 
-    // Resolve schools via Geoapify if provided
-    if (Array.isArray(target_schools)) {
-      const resolved = await resolveTargetSchools(target_schools, baseLonLat);
-      vendor.target_schools = resolved;
+    // === AUTO-ASSIGN NEAREST 3 SCHOOLS (no user input needed) ===
+    // If we have a bias coordinate, fetch & assign 3 nearby schools.
+    if (bias) {
+      const schools = await findNearbySchools(bias, 3);
+      vendor.target_schools = schools; // overwrite with exactly 3 (or fewer if API returns less)
     }
 
     await vendor.save();
@@ -64,12 +64,8 @@ const updateKitchenPhotos = async (req, res) => {
     const vendor = await Vendor.findOne({ user_id: userId });
     if (!vendor) return res.status(404).json({ message: "Vendor not found" });
 
-    // multer put files at req.files
     const files = req.files || [];
-    const urls = files.map((f) => {
-      const basename = f.filename;
-      return `/uploads/kitchens/${basename}`;
-    });
+    const urls = files.map((f) => `/uploads/kitchens/${f.filename}`);
 
     const replace = (req.query.replace || "").toLowerCase() === "true";
     vendor.kitchen_photos = replace ? urls : [...(vendor.kitchen_photos || []), ...urls];
