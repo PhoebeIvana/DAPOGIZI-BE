@@ -5,6 +5,7 @@ const app = express();
 
 // Importing routes
 const authRoutes = require("./routes/authRoutes"); 
+const adminRoutes = require("./routes/adminRoutes");
 
 // Middleware
 app.use(express.json());
@@ -13,7 +14,8 @@ app.use(express.json());
 dotenv.config();
 
 // Set up routes
-app.use("/auth", authRoutes);
+app.use("/user/auth", authRoutes);
+app.use("/admin", adminRoutes);
 
 // Connection to MongoDB
 mongoose
