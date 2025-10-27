@@ -20,6 +20,7 @@ app.use("/admin", adminRoutes);
 // Connection to MongoDB
 mongoose
   .connect(process.env.MONGODB_URI,{
+    dbName: "dapogizi",
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })

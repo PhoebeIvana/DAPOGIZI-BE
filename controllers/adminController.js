@@ -1,6 +1,7 @@
 const { Vendor } = require("../models/vendorSchema");
 const { User } = require("../models/userSchema");
 const { KitchenCheck } = require("../models/kitchenCheckSchema");
+const { MealPlan } = require("../models/mealPlanSchema");
 
 exports.getAllVendors = async (req, res) => {
   try {
@@ -85,6 +86,26 @@ exports.updateKitchenCheck = async (req, res) => {
     res.json({ success: true, data: check });
   } catch (err) {
     console.error("Update kitchen check error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.getVendorMealPlanStatus = async (req, res) => {
+  try {
+    const mealPlans = await MealPlan.find().populate("vendor_id", "vendor_name address");
+
+    const data = mealPlans.map((mealPlan) => ({
+      vendor_name: mealPlan.vendor_id?.vendor_name || "Unknown Vendor",
+      address: mealPlan.vendor_id?.address || "N/A",
+      meal_plan: {
+        name: mealPlan.name,
+        status: mealPlan.status,
+      },
+    }));
+
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Get vendor meal plan status error:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };

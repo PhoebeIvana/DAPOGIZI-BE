@@ -29,5 +29,5 @@ const kitchenCheckSchema = new mongoose.Schema({
   },
 });
 
-const KitchenCheck = mongoose.model("KitchenCheck", kitchenCheckSchema);
+const KitchenCheck = mongoose.model("KitchenCheck", kitchenCheckSchema, "kitchen_cleanliness_checks");
 module.exports = { KitchenCheck };
