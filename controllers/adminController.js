@@ -1,5 +1,4 @@
 const { Vendor } = require("../models/vendorSchema");
-const { User } = require("../models/userSchema");
 const { KitchenCheck } = require("../models/kitchenCheckSchema");
 const { MealPlan } = require("../models/mealPlanSchema");
 

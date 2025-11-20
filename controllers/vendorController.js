@@ -3,7 +3,6 @@ const { MealPlan } = require("../models/mealPlanSchema");
 
 exports.getMySubmissions = async (req, res) => {
   try {
-    // User is already authenticated and verified as vendor by middleware
     const vendorRecord = await Vendor.findOne({ user_id: req.userId });
     if (!vendorRecord) {
       return res.status(404).json({ 
@@ -25,7 +24,6 @@ exports.getMySubmissions = async (req, res) => {
         });
       }
       
-      // Filter for submissions created on or after this date
       parsedDate.setHours(0, 0, 0, 0);
       queryFilter.createdAt = { $gte: parsedDate };
     }
