@@ -11,18 +11,25 @@ const signup = async (req, res) => {
     const { email, password, vendor_name } = req.body;
 
     const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.status(400).json({ message: "Email already exists" });
-
-    if (!vendor_name) {
-      return res.status(400).json({ message: "Vendor name is required" });
+    if (existingUser) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email already exists" 
+      });
     }
 
-    const password_hash = await bcrypt.hash(password, 10);
+    if (!vendor_name) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Vendor name is required" 
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
       email,
-      password_hash,
+      password_hash: hashedPassword,
       role: "vendor",
     });
     await newUser.save();
@@ -34,13 +41,17 @@ const signup = async (req, res) => {
     await newVendor.save();
 
     res.status(201).json({
+      success: true,
       message: "Signup success",
       userId: newUser._id,
       role: "vendor",
     });
   } catch (error) {
     console.error("Signup error:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error" 
+    });
   }
 };
 
@@ -48,48 +59,76 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found" });
+    const authenticatedUser = await User.findOne({ email });
+    if (!authenticatedUser) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
 
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+    const isPasswordValid = await bcrypt.compare(password, authenticatedUser.password_hash);
+    if (!isPasswordValid) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid credentials" 
+      });
+    }
 
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      { userId: authenticatedUser._id, role: authenticatedUser.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
     res.json({
+      success: true,
       message: "Login success",
       token,
-      role: user.role,
+      role: authenticatedUser.role,
     });
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error" 
+    });
   }
 };
 
 const getVendorMe = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ message: "No token" });
-
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const user = await User.findById(decoded.userId);
-    if (!user || user.role !== "vendor") {
-      return res.status(403).json({ message: "Not a vendor" });
+    if (!authHeader) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "No token provided" 
+      });
     }
 
-    const vendor = await Vendor.findOne({ user_id: user._id });
-    res.json({ vendor });
+    const token = authHeader.split(" ")[1];
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+
+    const authenticatedUser = await User.findById(decodedToken.userId);
+    if (!authenticatedUser || authenticatedUser.role !== "vendor") {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Not a vendor" 
+      });
+    }
+
+    const vendorProfile = await Vendor.findOne({ user_id: authenticatedUser._id });
+    
+    res.json({ 
+      success: true, 
+      vendor: vendorProfile 
+    });
   } catch (error) {
     console.error("Get vendor error:", error);
-    res.status(401).json({ message: "Invalid or expired token" });
+    res.status(401).json({ 
+      success: false, 
+      message: "Invalid or expired token" 
+    });
   }
 };
 

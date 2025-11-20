@@ -6,6 +6,7 @@ const app = express();
 // Importing routes
 const authRoutes = require("./routes/authRoutes"); 
 const adminRoutes = require("./routes/adminRoutes");
+const vendorRoutes = require("./routes/vendorRoutes");
 
 // Middleware
 app.use(express.json());
@@ -16,11 +17,12 @@ dotenv.config();
 // Set up routes
 app.use("/user/auth", authRoutes);
 app.use("/admin", adminRoutes);
+app.use("/vendor", vendorRoutes);
 
 // Connection to MongoDB
 mongoose
   .connect(process.env.MONGODB_URI,{
-    dbName: "dapogizi",
+    dbName: "dapogizi_new",
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })

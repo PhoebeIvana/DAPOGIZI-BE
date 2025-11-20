@@ -6,8 +6,15 @@ const {
 	updateKitchenCheck,
 	getVendorMealPlanStatus,
 } = require("../controllers/adminController");
+const { 
+	verifyToken, 
+	verifyAdmin 
+} = require("../middleware/authMiddleware");
 
 const router = express.Router();
+
+router.use(verifyToken);
+router.use(verifyAdmin);
 
 router.get("/view-vendors", getAllVendors);
 router.get("/view-vendor/:id", getVendorDetails);

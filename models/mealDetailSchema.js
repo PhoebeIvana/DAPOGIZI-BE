@@ -32,5 +32,5 @@ const mealDetailSchema = new mongoose.Schema({
   },
 });
 
-const MealPlanDetail = mongoose.model("MealDetail", mealDetailSchema);
-module.exports = { MealPlanDetail };
+const MealDetail = mongoose.model("MealDetail", mealDetailSchema, "mealdetails");
+module.exports = { MealDetail };

@@ -5,16 +5,16 @@ const { MealPlan } = require("../models/mealPlanSchema");
 
 exports.getAllVendors = async (req, res) => {
   try {
-    const vendors = await Vendor.find().populate("user_id", "email");
+    const allVendors = await Vendor.find().populate("user_id", "email");
 
-    const data = vendors.map((vendor) => ({
+    const vendorDataList = allVendors.map((vendor) => ({
       id: vendor._id,
       vendor_name: vendor.vendor_name,
       address: vendor.address || "N/A",
       email: vendor.user_id?.email || "N/A",
     }));
 
-    res.json({ success: true, data });
+    res.json({ success: true, data: vendorDataList });
   } catch (err) {
     console.error("Get all vendors error:", err);
     res.status(500).json({ success: false, message: err.message });
@@ -24,21 +24,25 @@ exports.getAllVendors = async (req, res) => {
 exports.getVendorDetails = async (req, res) => {
   try {
     const vendorId = req.params.id;
-    const vendor = await Vendor.findById(vendorId).populate(
+    const vendorRecord = await Vendor.findById(vendorId).populate(
       "user_id",
       "email"
     );
-    if (!vendor) {
-      return res.status(404).json({ message: "Vendor not found" });
+    
+    if (!vendorRecord) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Vendor not found" 
+      });
     }
 
-    const data = {
-      vendor_name: vendor.vendor_name,
-      address: vendor.address || "N/A",
-      email: vendor.user_id?.email || "N/A",
+    const vendorDetails = {
+      vendor_name: vendorRecord.vendor_name,
+      address: vendorRecord.address || "N/A",
+      email: vendorRecord.user_id?.email || "N/A",
     };
 
-    res.json({ success: true, data });
+    res.json({ success: true, data: vendorDetails });
   } catch (err) {
     console.error("Get vendor details error:", err);
     res.status(500).json({ success: false, message: err.message });
@@ -48,21 +52,21 @@ exports.getVendorDetails = async (req, res) => {
 exports.getKitchenChecksForVendor = async (req, res) => {
   try {
     const vendorId = req.params.vendorId;
-    const checks = await KitchenCheck.find({ vendor_id: vendorId }).populate(
+    const kitchenChecks = await KitchenCheck.find({ vendor_id: vendorId }).populate(
       "checked_by",
       "email"
     );
 
-    const data = checks.map((c) => ({
-      id: c._id,
-      check_date: c.check_date,
-      score: c.score,
-      status: c.status,
-      notes: c.notes || "",
-      checked_by: c.checked_by?.email || null,
+    const kitchenCheckList = kitchenChecks.map((kitchenCheck) => ({
+      id: kitchenCheck._id,
+      check_date: kitchenCheck.check_date,
+      score: kitchenCheck.score,
+      status: kitchenCheck.status,
+      notes: kitchenCheck.notes || "",
+      checked_by: kitchenCheck.checked_by?.email || null,
     }));
 
-    res.json({ success: true, data });
+    res.json({ success: true, data: kitchenCheckList });
   } catch (err) {
     console.error("Get kitchen checks error:", err);
     res.status(500).json({ success: false, message: err.message });
@@ -74,16 +78,21 @@ exports.updateKitchenCheck = async (req, res) => {
     const checkId = req.params.checkId;
     const { score, status, notes } = req.body;
 
-    const check = await KitchenCheck.findById(checkId);
-    if (!check) return res.status(404).json({ message: "Check not found" });
+    const kitchenCheckToUpdate = await KitchenCheck.findById(checkId);
+    if (!kitchenCheckToUpdate) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Kitchen check not found" 
+      });
+    }
 
-    if (score !== undefined) check.score = score;
-    if (status !== undefined) check.status = status;
-    if (notes !== undefined) check.notes = notes;
+    if (score !== undefined) kitchenCheckToUpdate.score = score;
+    if (status !== undefined) kitchenCheckToUpdate.status = status;
+    if (notes !== undefined) kitchenCheckToUpdate.notes = notes;
 
-    await check.save();
+    await kitchenCheckToUpdate.save();
 
-    res.json({ success: true, data: check });
+    res.json({ success: true, data: kitchenCheckToUpdate });
   } catch (err) {
     console.error("Update kitchen check error:", err);
     res.status(500).json({ success: false, message: err.message });
@@ -92,9 +101,9 @@ exports.updateKitchenCheck = async (req, res) => {
 
 exports.getVendorMealPlanStatus = async (req, res) => {
   try {
-    const mealPlans = await MealPlan.find().populate("vendor_id", "vendor_name address");
+    const allMealPlans = await MealPlan.find().populate("vendor_id", "vendor_name address");
 
-    const data = mealPlans.map((mealPlan) => ({
+    const mealPlanStatusList = allMealPlans.map((mealPlan) => ({
       vendor_name: mealPlan.vendor_id?.vendor_name || "Unknown Vendor",
       address: mealPlan.vendor_id?.address || "N/A",
       meal_plan: {
@@ -103,7 +112,7 @@ exports.getVendorMealPlanStatus = async (req, res) => {
       },
     }));
 
-    res.json({ success: true, data });
+    res.json({ success: true, data: mealPlanStatusList });
   } catch (err) {
     console.error("Get vendor meal plan status error:", err);
     res.status(500).json({ success: false, message: err.message });
