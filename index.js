@@ -1,23 +1,27 @@
+// index.js
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const path = require('path');
 const app = express();
 
 // Importing routes
 const authRoutes = require("./routes/authRoutes"); 
 const adminRoutes = require("./routes/adminRoutes");
 const vendorRoutes = require("./routes/vendorRoutes");
+const mealPlanRoutes = require("./routes/mealPlanRoutes");
 
 // Middleware
 app.use(express.json());
 
-// Load .env
-dotenv.config();
+// Static for uploaded images
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Set up routes
+// Routes
 app.use("/user/auth", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/vendor", vendorRoutes);
+app.use("/vendor", mealPlanRoutes);    
 
 // Connection to MongoDB
 mongoose
@@ -35,7 +39,7 @@ mongoose
   .catch((error) => {
     console.log(error);
   });
-  
+
 // Event listener to monitor the connection
 const con = mongoose.connection;
 con.on("disconnected", () => {

@@ -1,3 +1,4 @@
+// models/mealPlanSchema.js
 const mongoose = require("mongoose");
 
 const mealPlanSchema = new mongoose.Schema(
@@ -10,6 +11,10 @@ const mealPlanSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
+    },
+    description: {              // <— NEW
+      type: String,
+      default: "",
     },
     image_url: String,
     status: {
