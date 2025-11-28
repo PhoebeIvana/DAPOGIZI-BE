@@ -19,8 +19,8 @@ function makeStorage(subdir) {
 }
 
 function imageFileFilter(req, file, cb) {
-  const ok = /image\/(jpeg|jpg|png|webp)/.test(file.mimetype);
-  cb(ok ? null : new Error("Only image files are allowed"), ok);
+  const ok = /image\/(jpg)/.test(file.mimetype);
+  cb(ok ? null : new Error("Only .jpg are allowed"), ok);
 }
 
 const kitchenPhotosUpload = multer({
