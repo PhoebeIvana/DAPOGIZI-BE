@@ -104,7 +104,7 @@ Vendors must be authenticated with the vendor role.
 ```
 
 #### Update Meal Plan
-**Endpoint:** `POST /vendor/meal-plans/:meal_id
+**Endpoint:** `PUT /vendor/meal-plans/:meal_id
 
 **Description:** Allows vendors to update details of an existing meal plan, including nutritional info (e.g., protein), description, and meal photo.
 
