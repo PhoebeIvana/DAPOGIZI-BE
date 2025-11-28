@@ -442,6 +442,40 @@ GET /admin/kitchen-checks/vendor/60d5ec49f1b2c72b8c8e4a1b
 - 403 - Not a vendor
 - 500 - Server error or Geoapify API issue
 
+### Update Kitchen Photos
+**Endpoint:** `PUT /vendor/kitchen/photos`
+
+**Description:** Upload kitchen photos. This automatically triggers an AI cleanliness check on the last uploaded photo.
+
+**Authentication:** Required (Vendor role)
+
+**Query Parameters:**
+- `replace`: `true` or `false` (default `false`). If true, replaces existing photos.
+
+**Request Body (Multipart/Form-Data):**
+- `photos`: File(s) (image, max 5 files, 3MB each)
+- `notes`: Text (optional). User provided notes for the kitchen check.
+
+**Success Response (200):**
+```json
+{
+  "message": "Kitchen photos updated",
+  "kitchen_photos": [
+    "/uploads/kitchens/1732774000000-123456.jpg"
+  ],
+  "kitchen_check": {
+    "score": 0.98,
+    "status": "clean",
+    "notes": "Optional user notes"
+  }
+}
+```
+
+**Error Responses:**
+- `400` - Upload error
+- `401` - Unauthorized
+- `500` - Server error
+
 ### Add & Update Meal Plan
 
 #### Add Meal Plan

@@ -1,8 +1,12 @@
 const { Vendor } = require("../models/vendorSchema");
 const { MealPlan } = require("../models/mealPlanSchema");
+const { KitchenCheck } = require("../models/kitchenCheckSchema");
 const { geocodeAddress, findNearbySchools } = require("../utils/geoapify");
+const { analyzeKitchenImage } = require("../services/kitchenAIService");
+const { determineKitchenStatus } = require("../utils/kitchenStatus");
+const { uploadToSupabase, downloadFromSupabase } = require("../utils/supabaseUpload");
 
-exports.getMySubmissions = async (req, res) => {
+const getMySubmissions = async (req, res) => {
   try {
     const vendorRecord = await Vendor.findOne({ user_id: req.userId });
     if (!vendorRecord) {
@@ -121,18 +125,65 @@ const updateKitchenPhotos = async (req, res) => {
     if (!vendor) return res.status(404).json({ message: "Vendor not found" });
 
     const files = req.files || [];
-    const urls = files.map((f) => `/uploads/kitchens/${f.filename}`);
+    if (files.length === 0) {
+      return res.status(400).json({ message: "No files uploaded" });
+    }
+
+    const filenames = files.map(f => f.originalname.toLowerCase());
+    const hasDuplicate = filenames.some((name, idx) => filenames.indexOf(name) !== idx);
+
+    if (hasDuplicate) {
+      return res.status(400).json({
+        message: "Duplicate filenames detected. Please rename your files before uploading."
+      });
+    }
+    const uploadPromises = files.map((file) =>
+      uploadToSupabase(file.buffer, "kitchens", file.originalname)
+    );
+    const supabaseUrls = await Promise.all(uploadPromises);
 
     const replace = (req.query.replace || "").toLowerCase() === "true";
-    vendor.kitchen_photos = replace ? urls : [...(vendor.kitchen_photos || []), ...urls];
+    vendor.kitchen_photos = replace ? supabaseUrls : [...(vendor.kitchen_photos || []), ...supabaseUrls];
 
     await vendor.save();
+
+    let aiResult = null;
+
+    if (supabaseUrls.length > 0) {
+      const lastFileUrl = supabaseUrls[supabaseUrls.length - 1];
+      const lastFile = files[files.length - 1];
+
+      try {
+        const imageBuffer = await downloadFromSupabase(lastFileUrl);
+
+        const aiData = await analyzeKitchenImage(imageBuffer, lastFile.originalname);
+        const status = determineKitchenStatus(aiData.prediction);
+
+        const kitchenCheck = await KitchenCheck.create({
+          vendor_id: vendor._id,
+          score: aiData.confidence,
+          status: status,
+          notes: req.body.notes || "",
+          checked_by: req.user._id,
+          check_date: new Date(),
+        });
+
+        aiResult = {
+          score: kitchenCheck.score,
+          status: kitchenCheck.status,
+        };
+      } catch (e) {
+        console.error("Analysis AI error:", e.message);
+      }
+    }
+
     return res.json({
       message: "Kitchen photos updated",
       kitchen_photos: vendor.kitchen_photos,
+      kitchen_check: aiResult,
     });
-  } catch (err) {
-    console.error("updateKitchenPhotos error:", err);
+  } catch (e) {
+    console.error("updateKitchenPhotos failed:", e);
     return res.status(500).json({ message: "Server error" });
   }
 };

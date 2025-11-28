@@ -16,7 +16,7 @@ const kitchenCheckSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["clean", "unclean"],
+    enum: ["clean", "dirty"],
     required: true,
   },
   notes: {
@@ -25,7 +25,7 @@ const kitchenCheckSchema = new mongoose.Schema({
   checked_by: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Users",
-    required: true,
+    default: null,  
   },
 });
 

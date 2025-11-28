@@ -2,7 +2,7 @@ const { Vendor } = require("../models/vendorSchema");
 const { KitchenCheck } = require("../models/kitchenCheckSchema");
 const { MealPlan } = require("../models/mealPlanSchema");
 
-exports.getAllVendors = async (req, res) => {
+const getAllVendors = async (req, res) => {
   try {
     const allVendors = await Vendor.find().populate("user_id", "email");
 
@@ -20,7 +20,7 @@ exports.getAllVendors = async (req, res) => {
   }
 };
 
-exports.getVendorDetails = async (req, res) => {
+const getVendorDetails = async (req, res) => {
   try {
     const vendorId = req.params.id;
     const vendorRecord = await Vendor.findById(vendorId).populate(
@@ -48,7 +48,7 @@ exports.getVendorDetails = async (req, res) => {
   }
 };
 
-exports.getKitchenChecksForVendor = async (req, res) => {
+const getKitchenChecksForVendor = async (req, res) => {
   try {
     const vendorId = req.params.vendorId;
     const kitchenChecks = await KitchenCheck.find({ vendor_id: vendorId }).populate(
@@ -72,7 +72,7 @@ exports.getKitchenChecksForVendor = async (req, res) => {
   }
 };
 
-exports.updateKitchenCheck = async (req, res) => {
+const updateKitchenCheck = async (req, res) => {
   try {
     const checkId = req.params.checkId;
     const { score, status, notes } = req.body;
@@ -98,7 +98,7 @@ exports.updateKitchenCheck = async (req, res) => {
   }
 };
 
-exports.getVendorMealPlanStatus = async (req, res) => {
+const getVendorMealPlanStatus = async (req, res) => {
   try {
     const allMealPlans = await MealPlan.find().populate("vendor_id", "vendor_name address");
 
@@ -116,4 +116,12 @@ exports.getVendorMealPlanStatus = async (req, res) => {
     console.error("Get vendor meal plan status error:", err);
     res.status(500).json({ success: false, message: err.message });
   }
+};
+
+module.exports = {
+  getAllVendors,
+  getVendorDetails,
+  getKitchenChecksForVendor,
+  updateKitchenCheck,
+  getVendorMealPlanStatus,
 };
