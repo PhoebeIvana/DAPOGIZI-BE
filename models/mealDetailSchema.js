@@ -1,3 +1,4 @@
+// models/mealDetailSchema.js
 const mongoose = require("mongoose");
 
 const mealDetailSchema = new mongoose.Schema({

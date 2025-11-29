@@ -68,16 +68,20 @@ const getMySubmissions = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
+    console.log("Updating profile for user:", userId);
+
     const vendor = await Vendor.findOne({ user_id: userId });
     if (!vendor) return res.status(404).json({ message: "Vendor not found" });
 
     const {
       vendor_name,
       address,
-      operating_days,  
-      location,        
-      skip_geo         
+      operating_days,
+      location,
+      skip_geo,
     } = req.body || {};
+
+    console.log("Request body:", req.body); // Log incoming data
 
     if (vendor_name != null) vendor.vendor_name = vendor_name;
     if (address != null) vendor.address = address;
@@ -94,6 +98,7 @@ const updateProfile = async (req, res) => {
       bias = { lon: Number(location.lon), lat: Number(location.lat) };
     } else if (!wantSkipGeo && address) {
       const geo = await geocodeAddress(address);
+      console.log("Geocode result:", geo); // Log geocode response
       if (geo) {
         vendor.location = { type: "Point", coordinates: [geo.lon, geo.lat] };
         bias = { lon: geo.lon, lat: geo.lat };
@@ -107,10 +112,13 @@ const updateProfile = async (req, res) => {
 
     if (bias) {
       const schools = await findNearbySchools(bias, 3);
-      vendor.target_schools = schools; 
+      console.log("Nearby schools:", schools); // Log nearby schools
+      vendor.target_schools = schools;
     }
 
+    console.log("Vendor before save:", vendor); // Log before saving
     await vendor.save();
+
     return res.json({ message: "Vendor updated", vendor });
   } catch (err) {
     console.error("updateProfile error:", err);

@@ -20,12 +20,12 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Routes
 app.use("/user/auth", authRoutes);
 app.use("/admin", adminRoutes);
-app.use("/vendor", vendorRoutes);
-app.use("/vendor", mealPlanRoutes);    
+app.use("/vendor", vendorRoutes);  // For vendor-related routes
+app.use("/vendor", mealPlanRoutes); // Meal plan routes are under /vendor
 
 // Connection to MongoDB
 mongoose
-  .connect(process.env.MONGODB_URI,{
+  .connect(process.env.MONGODB_URI, {
     dbName: "dapogizi_new",
     useNewUrlParser: true,
     useUnifiedTopology: true,
