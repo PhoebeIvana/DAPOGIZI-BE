@@ -2,6 +2,7 @@
 const { Vendor } = require("../models/vendorSchema");
 const { MealPlan } = require("../models/mealPlanSchema");
 const { MealDetail } = require("../models/mealDetailSchema");
+const { uploadToSupabase } = require("../utils/supabaseUpload");
 
 async function ensureVendor(req) {
   const userId = req.user._id;
@@ -17,8 +18,11 @@ const createMealPlan = async (req, res) => {
     const { name, description } = req.body || {};
     if (!name) return res.status(400).json({ message: "name is required" });
 
+    let image_url = null;
     const imageFile = req.file;
-    const image_url = imageFile ? `/uploads/meals/${imageFile.filename}` : undefined;
+    if (imageFile) {
+      image_url = await uploadToSupabase(imageFile.buffer, "meals", imageFile.originalname);
+    }
 
     const plan = new MealPlan({
       vendor_id: vendor._id,
@@ -64,7 +68,7 @@ const updateMealPlan = async (req, res) => {
 
     const imageFile = req.file;
     if (imageFile) {
-      plan.image_url = `/uploads/meals/${imageFile.filename}`;
+      plan.image_url = await uploadToSupabase(imageFile.buffer, "meals", imageFile.originalname);
     }
 
     await plan.save();

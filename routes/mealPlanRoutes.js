@@ -2,7 +2,7 @@
 const express = require("express");
 const { verifyToken, verifyVendor } = require("../middleware/authMiddleware");
 const { createMealPlan, updateMealPlan } = require("../controllers/mealPlanController");
-const { mealImageUpload } = require("../utils/upload");
+const { mealImageUpload } = require("../utils/supabaseUpload");
 
 const router = express.Router();
 
