@@ -1,7 +1,8 @@
 // controllers/mealPlanController.js
 const { Vendor } = require("../models/vendorSchema");
 const { MealPlan } = require("../models/mealPlanSchema");
-const { MealPlanDetail } = require("../models/mealDetailSchema");
+const { MealDetail } = require("../models/mealDetailSchema");
+const { uploadToSupabase } = require("../utils/supabaseUpload");
 
 async function ensureVendor(req) {
   const userId = req.user._id;
@@ -9,7 +10,6 @@ async function ensureVendor(req) {
   return vendor;
 }
 
-// (Optional helper) create plan if needed
 const createMealPlan = async (req, res) => {
   try {
     const vendor = await ensureVendor(req);
@@ -18,8 +18,11 @@ const createMealPlan = async (req, res) => {
     const { name, description } = req.body || {};
     if (!name) return res.status(400).json({ message: "name is required" });
 
+    let image_url = null;
     const imageFile = req.file;
-    const image_url = imageFile ? `/uploads/meals/${imageFile.filename}` : undefined;
+    if (imageFile) {
+      image_url = await uploadToSupabase(imageFile.buffer, "meals", imageFile.originalname);
+    }
 
     const plan = new MealPlan({
       vendor_id: vendor._id,
@@ -43,7 +46,6 @@ const updateMealPlan = async (req, res) => {
     if (!vendor) return res.status(404).json({ message: "Vendor not found" });
 
     const { id } = req.params;
-
     const plan = await MealPlan.findById(id);
     if (!plan) return res.status(404).json({ message: "MealPlan not found" });
     if (String(plan.vendor_id) !== String(vendor._id)) {
@@ -66,13 +68,13 @@ const updateMealPlan = async (req, res) => {
 
     const imageFile = req.file;
     if (imageFile) {
-      plan.image_url = `/uploads/meals/${imageFile.filename}`;
+      plan.image_url = await uploadToSupabase(imageFile.buffer, "meals", imageFile.originalname);
     }
 
     await plan.save();
 
     // Upsert meal detail
-    const detail = await MealPlanDetail.findOne({ meal_id: plan._id });
+    const detail = await MealDetail.findOne({ meal_id: plan._id });
     const toNum = (v) => (v == null ? undefined : Number(v));
 
     const detailData = {
@@ -90,10 +92,9 @@ const updateMealPlan = async (req, res) => {
       });
       await detail.save();
     } else {
-      // create if any field provided
       const anyProvided = Object.values(detailData).some((v) => v != null);
       if (anyProvided) {
-        const newDetail = new MealPlanDetail({
+        const newDetail = new MealDetail({
           meal_id: plan._id,
           ...detailData,
         });
@@ -102,7 +103,7 @@ const updateMealPlan = async (req, res) => {
     }
 
     // Return both plan + detail
-    const outDetail = await MealPlanDetail.findOne({ meal_id: plan._id });
+    const outDetail = await MealDetail.findOne({ meal_id: plan._id });
     return res.json({ message: "MealPlan updated", mealPlan: plan, detail: outDetail });
   } catch (err) {
     console.error("updateMealPlan error:", err);

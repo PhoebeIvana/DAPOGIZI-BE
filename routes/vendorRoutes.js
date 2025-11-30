@@ -1,7 +1,7 @@
 const express = require("express");
 const { getMySubmissions, updateProfile, updateKitchenPhotos } = require("../controllers/vendorController");
 const { verifyToken, verifyVendor } = require("../middleware/authMiddleware");
-const { kitchenPhotosUpload } = require("../utils/upload");
+const { kitchenPhotosUpload } = require("../utils/supabaseUpload");
 
 const router = express.Router();
 

@@ -12,7 +12,7 @@ const mealPlanSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    description: {              // <— NEW
+    description: {
       type: String,
       default: "",
     },
